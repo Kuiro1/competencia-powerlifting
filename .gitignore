@@ -1,0 +1,9 @@
+env/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+build/
+dist/
+*.spec
+competencia_backup.json
