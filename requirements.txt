@@ -4,5 +4,6 @@ flask-socketio==5.3.6
 python-socketio==5.11.1
 simple-websocket==1.0.0
 pandas==1.5.3
+numpy==1.23.5
 eventlet==0.33.3
 gunicorn==21.2.0
