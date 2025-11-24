@@ -281,7 +281,11 @@
         let valoresTemporales = {};
 
         // Conectar Socket.IO para tiempo real
-        const socket = io();
+        const socket = io({
+    transports: ['websocket'],
+    upgrade: false
+});
+
 
         socket.on('connect', () => {
             console.log('✅ Conectado al servidor en tiempo real');
