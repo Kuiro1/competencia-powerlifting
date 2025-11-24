@@ -143,7 +143,8 @@ def guardar_backup():
 
 def notificar_cambios(cat_id):
     """Notifica a todos los clientes conectados que hubo un cambio"""
-    socketio.emit('datos_actualizados', {'categoria': cat_id}, broadcast=True)
+    socketio.emit('datos_actualizados', {'categoria': cat_id})
+
 
 # ========== FUNCIONES AUXILIARES ==========
 
