@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión Powerlifting</title>
+    
+    <!-- Socket.IO para tiempo real -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        
+        h1 { color: #333; margin-bottom: 20px; }
+        h2 { color: #007bff; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #007bff; }
+        
+        .header-control { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        select { 
+            padding: 10px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            border: 1px solid #ccc; 
+            min-width: 250px;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white; 
+            margin-top: 10px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            text-align: center; 
+        }
+        
+        th { 
+            background: #007bff; 
+            color: white;
+            font-weight: bold;
+        }
+        
+        .th-movimiento { background: #28a745; color: white; }
+        
+        tr:nth-child(even) { background: #f9f9f9; }
+        tr:hover { background: #f1f1f1; }
+        
+        /* Botones */
+        .btn { border: none; border-radius: 4px; cursor: pointer; font-weight: bold; padding: 5px 8px; margin: 2px; font-size: 12px; }
+        .btn-exito { background: #28a745; color: white; }
+        .btn-fallo { background: #dc3545; color: white; }
+        .btn-borrar { background: #6c757d; color: white; }
+        .btn-editar { background: #ffc107; color: black; padding: 2px 6px; }
+        .btn-eliminar { background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .debug { 
+            background: #fff3cd; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+        
+        .section-container {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .form-container { 
+            background: white; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border-radius: 8px; 
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            align-items: flex-end;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-group { display: flex; flex-direction: column; text-align: left; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 3px; }
+        input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; width: 70px; }
+        
+        .movimiento-tabla {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        
+        .titulo-movimiento {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .error { color: #dc3545; font-weight: bold; }
+        .success { color: #28a745; font-weight: bold; }
+        .info { color: #0056b3; font-weight: bold; }
+        
+        .legend {
+            background: #e7f3ff;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            border-left: 4px solid #0056b3;
+        }
+        
+        .paused-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ffc107;
+            color: black;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .connection-indicator {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 12px;
+        }
+
+        .connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Estilos para el header del ranking con logo */
+        .header-ranking {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .header-ranking h2 {
+            margin: 0;
+            border-bottom: none;
+        }
+        .logo-universidad {
+            height: 70px;
+            max-width: 300px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="paused-indicator" class="paused-indicator">
+        ⏸️ Auto-actualización pausada
+    </div>
+
+    <div id="connection-indicator" class="connection-indicator disconnected">
+        🔴 Desconectado
+    </div>
+
+    <div class="header-control">
+        <h1>⛹️ Gestión de Competencia</h1>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div>
+                <label><strong>Categoría: </strong></label>
+                <select id="cat-selector" onchange="cambiarCategoria()">
+                    <option value="damas_iniciantes" selected>Damas Iniciantes</option>
+                    <option value="damas_avanzadas">Damas Avanzadas</option>
+                    <option value="damas_overall">Damas Overall</option>
+                    <option value="varones_iniciantes">Varones Iniciantes</option>
+                    <option value="varones_avanzados">Varones Avanzados</option>
+                    <option value="varones_overall">Varones Overall</option>
+                </select>
+            </div>
+            <button class="btn btn-exito" onclick="descargarRanking()" style="padding: 10px 20px;">
+                📥 Descargar Ranking
+            </button>
+        </div>
+    </div>
+
+    <div class="debug" id="debug-info"></div>
+
+    <div class="form-container">
+        <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="new-nombre" placeholder="Nombre" style="width: 150px;">
+        </div>
+        <div class="form-group">
+            <label>Carrera</label>
+            <input type="text" id="new-carrera" placeholder="Carrera" style="width: 120px;">
+        </div>
+        <div class="form-group">
+            <label>BW (kg)</label>
+            <input type="number" id="new-bw" placeholder="kg" step="0.1">
+        </div>
+        
+        <!-- Contenedor dinámico para los movimientos -->
+        <div id="form-movimientos" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <!-- Se llenará dinámicamente según la categoría -->
+        </div>
+        
+        <button class="btn btn-exito" onclick="agregarParticipante()" style="padding: 10px 20px;">➕ Agregar</button>
+    </div>
+
+    <div class="section-container">
+        <div class="header-ranking">
+            <h2>🏆 Ranking General (Suma de Todos los Movimientos)</h2>
+            <img src="logo_header.png" alt="Logo PUCV" class="logo-universidad">
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Lugar</th>
+                    <th>Nombre</th>
+                    <th>Carrera</th>
+                    <th>BW</th>
+                    <th>F.R. Total</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-ranking"></tbody>
+        </table>
+        <div class="legend">
+            <strong>📊 F.R. Total = (Suma pesos máximos) / BW</strong> | Mayor a menor
+        </div>
+    </div>
+
+    <div class="section-container">
+        <h2>📊 Movimientos - Panel de Control</h2>
+        <div id="tablas-movimientos"></div>
+    </div>
+
+    <script>
+        let currentCat = document.getElementById('cat-selector').value;
+        let userIsTyping = false;
+        let typingTimeout = null;
+        let isLoading = false;
+        let valoresTemporales = {};
+
+        // Conectar Socket.IO para tiempo real
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('✅ Conectado al servidor en tiempo real');
+            document.getElementById('connection-indicator').className = 'connection-indicator connected';
+            document.getElementById('connection-indicator').textContent = '🟢 Conectado';
+        });
+
+        socket.on('datos_actualizados', (data) => {
+            console.log('📡 Actualización recibida:', data);
+            // Solo recargar si es la categoría actual y no estamos escribiendo
+            if (data.categoria === currentCat && !userIsTyping && !isLoading) {
+                cargarTodo();
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Desconectado del servidor');
+            document.getElementById('connection-indicator').className = 'connection-indicator disconnected';
+            document.getElementById('connection-indicator').textContent = '🔴 Desconectado';
+        });
+
+        document.addEventListener('focusin', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                userIsTyping = true;
+                document.getElementById('paused-indicator').style.display = 'block';
+            }
+        });
+
+        document.addEventListener('focusout', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    userIsTyping = false;
+                    document.getElementById('paused-indicator').style.display = 'none';
+                }, 5000);
+            }
+        });
+
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                userIsTyping = true;
+                document.getElementById('paused-indicator').style.display = 'block';
+                
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    userIsTyping = false;
+                    document.getElementById('paused-indicator').style.display = 'none';
+                }, 5000);
+            }
+        });
+
+        function cambiarCategoria() {
+            currentCat = document.getElementById('cat-selector').value;
+            valoresTemporales = {};
+            generarFormularioMovimientos();
+            cargarTodo();
+        }
+
+        function generarFormularioMovimientos() {
+            const contenedor = document.getElementById('form-movimientos');
+            contenedor.innerHTML = '';
+            
+            fetch(`/movimientos/${currentCat}`)
+                .then(res => res.json())
+                .then(movimientos => {
+                    movimientos.forEach(mov => {
+                        const divMov = document.createElement('div');
+                        divMov.style.border = '2px solid #28a745';
+                        divMov.style.padding = '10px';
+                        divMov.style.borderRadius = '5px';
+                        divMov.style.backgroundColor = '#f0fff0';
+                        
+                        let html = `<div style="margin-bottom: 5px; font-weight: bold; color: #28a745;">${mov.nombre}</div>`;
+                        
+                        html += `
+                            <div class="form-group" style="margin-bottom: 5px;">
+                                <label>Intento 1</label>
+                                <input type="number" id="mov-${mov.id}-int1" placeholder="kg" step="2.5" style="width: 70px;">
+                            </div>
+                        `;
+                        
+                        if (mov.intentos >= 2) {
+                            html += `
+                                <div class="form-group" style="margin-bottom: 5px;">
+                                    <label>Intento 2</label>
+                                    <input type="number" id="mov-${mov.id}-int2" placeholder="kg" step="2.5" style="width: 70px;">
+                                </div>
+                            `;
+                        }
+                        
+                        if (mov.intentos === 3) {
+                            html += `
+                                <div class="form-group">
+                                    <label>Intento 3</label>
+                                    <input type="number" id="mov-${mov.id}-int3" placeholder="kg" step="2.5" style="width: 70px;">
+                                </div>
+                            `;
+                        }
+                        
+                        divMov.innerHTML = html;
+                        contenedor.appendChild(divMov);
+                    });
+                });
+        }
+
+        function guardarValorTemporal(input) {
+            if (input.value) {
+                valoresTemporales[input.id] = input.value;
+            }
+        }
+
+        function restaurarValoresTemporales() {
+            for (let id in valoresTemporales) {
+                const input = document.getElementById(id);
+                if (input && !input.disabled) {
+                    input.value = valoresTemporales[id];
+                }
+            }
+        }
+
+        function limpiarValorTemporal(inputId) {
+            delete valoresTemporales[inputId];
+        }
+
+        async function cargarTodo() {
+            if (isLoading) return;
+            if (userIsTyping) return;
+
+            isLoading = true;
+
+            try {
+                const scrollPos = window.scrollY;
+                
+                const r_ranking = await fetch(`/ranking/${currentCat}`);
+                const ranking = await r_ranking.json();
+                dibujarRanking(ranking);
+                
+                const r_mov = await fetch(`/movimientos/${currentCat}`);
+                const movimientos = await r_mov.json();
+                
+                const contenedor = document.getElementById('tablas-movimientos');
+                contenedor.innerHTML = '';
+                
+                if (movimientos && movimientos.length > 0) {
+                    for (const mov of movimientos) {
+                        const r_datos = await fetch(`/movimiento/${currentCat}/${mov.id}`);
+                        const datos = await r_datos.json();
+                        datos.sort((a, b) => a.Intento1 - b.Intento1);
+                        const tabla_html = crearTablaMovimiento(mov, datos);
+                        contenedor.innerHTML += tabla_html;
+                    }
+                }
+                
+                document.getElementById('debug-info').innerHTML = 
+                    `✅ Categoría: <b>${currentCat}</b> | Participantes: ${ranking.length}`;
+                
+                window.scrollTo(0, scrollPos);
+                restaurarValoresTemporales();
+                    
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('debug-info').innerHTML = 
+                    `<span class="error">❌ ERROR: ${error.message}</span>`;
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function dibujarRanking(datos) {
+            const tbody = document.getElementById('tbody-ranking');
+            tbody.innerHTML = '';
+            
+            if (datos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5"><span class="error">Sin datos</span></td></tr>';
+                return;
+            }
+            
+            datos.forEach((d) => {
+                const fuerza = d.Total_Fuerza_Relativa ? d.Total_Fuerza_Relativa.toFixed(4) : '0.0000';
+                const bw = d.BW ? d.BW.toFixed(1) : '0.0';
+                const fila = `
+                    <tr>
+                        <td><strong>${d.Lugar}</strong></td>
+                        <td>
+                            ${d.Nombre} 
+                            <button class="btn btn-eliminar" onclick="eliminarParticipante('${d.Nombre}')" title="Eliminar">X</button>
+                        </td>
+                        <td>${d.Carrera || '-'}</td>
+                        <td>
+                            ${bw} 
+                            <button class="btn btn-editar" onclick="editarBW('${d.Nombre}', '${bw}')">✎</button>
+                        </td>
+                        <td><span class="info">${fuerza}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+        }
+
+        function crearTablaMovimiento(movimiento, datos) {
+            let html = `
+                <div class="movimiento-tabla">
+                    <div class="titulo-movimiento">
+                        🏋️ ${movimiento.nombre} (${movimiento.intentos} intentos) - Menor a Mayor
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="th-movimiento">Orden</th>
+                                <th class="th-movimiento">Nombre</th>
+                                <th class="th-movimiento">BW</th>
+                                <th class="th-movimiento">Int 1</th>
+                                <th class="th-movimiento">Res 1</th>
+                                <th class="th-movimiento">Int 2</th>
+                                <th class="th-movimiento">Res 2</th>
+            `;
+            
+            if (movimiento.intentos === 3) {
+                html += `<th class="th-movimiento">Int 3</th><th class="th-movimiento">Res 3</th>`;
+            }
+            
+            html += `<th class="th-movimiento">Mejor</th></tr></thead><tbody>`;
+            
+            if (datos.length === 0) {
+                html += `<tr><td colspan="10"><span class="error">Sin datos</span></td></tr>`;
+            } else {
+                datos.forEach((d, i) => {
+                    const bw = d.BW ? d.BW.toFixed(1) : '0';
+                    const int1 = d.Intento1 > 0 ? d.Intento1 : '-';
+                    const int2 = d.Intento2 > 0 ? d.Intento2 : '';
+                    const int3 = d.Intento3 > 0 ? d.Intento3 : '';
+                    const mejor = d.Mejor > 0 ? `<b>${d.Mejor}</b>` : '-';
+                    
+                    const r1 = d.Res1;
+                    
+                    let html_int1 = '';
+                    if (!r1 && int1 !== '-') {
+                        html_int1 = `<b>${int1}</b> <button class="btn btn-editar" onclick="editarIntento1('${d.Nombre}', '${movimiento.id}', ${d.Intento1})" title="Editar peso">✎</button>`;
+                    } else {
+                        html_int1 = `<b>${int1}</b>`;
+                    }
+                    
+                    let html_r1 = r1 ? 
+                        `<b>${r1.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','1')">🗑️</button>` :
+                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','exito')">✅</button>
+                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','fallo')">❌</button>`;
+                    
+                    const r2 = d.Res2;
+                    const dis2 = r2 ? 'disabled' : '';
+                    let html_r2 = r2 ?
+                        `<b>${r2.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
+                        `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','2','exito')" ${dis2}>✅</button>
+                         <button class="btn btn-fallo" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','2','fallo')" ${dis2}>❌</button>`;
+                    
+                    let fila = `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${d.Nombre}</td>
+                            <td>${bw}</td>
+                            <td>${html_int1}</td>
+                            <td>${html_r1}</td>
+                            <td><input id="in2-${movimiento.id}-${d.Nombre}" value="${int2}" ${dis2} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)"></td>
+                            <td>${html_r2}</td>
+                    `;
+                    
+                    if (movimiento.intentos === 3) {
+                        const r3 = d.Res3;
+                        const dis3 = r3 ? 'disabled' : '';
+                        let html_r3 = r3 ?
+                            `<b>${r3.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
+                            `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','exito')" ${dis3}>✅</button>
+                             <button class="btn btn-fallo" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','fallo')" ${dis3}>❌</button>`;
+                        
+                        fila += `
+                            <td><input id="in3-${movimiento.id}-${d.Nombre}" value="${int3}" ${dis3} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)"></td>
+                            <td>${html_r3}</td>
+                        `;
+                    }
+                    
+                    fila += `<td>${mejor}</td></tr>`;
+                    html += fila;
+                });
+            }
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        async function agregarParticipante() {
+            const nombre = document.getElementById('new-nombre').value;
+            const carrera = document.getElementById('new-carrera').value;
+            const bw = document.getElementById('new-bw').value;
+
+            if(!nombre || !bw) {
+                alert("❌ Faltan datos obligatorios (Nombre y BW)");
+                return;
+            }
+
+            const res_mov = await fetch(`/movimientos/${currentCat}`);
+            const movimientos = await res_mov.json();
+            
+            const intentos_data = {};
+            let faltanDatos = false;
+            
+            for (const mov of movimientos) {
+                const int1 = document.getElementById(`mov-${mov.id}-int1`).value;
+                
+                if (!int1 || parseFloat(int1) <= 0) {
+                    alert(`❌ Falta el Intento 1 para ${mov.nombre}`);
+                    faltanDatos = true;
+                    break;
+                }
+                
+                intentos_data[mov.id] = {
+                    intento1: parseFloat(int1),
+                    intento2: null,
+                    intento3: null
+                };
+                
+                const int2Input = document.getElementById(`mov-${mov.id}-int2`);
+                if (int2Input && int2Input.value) {
+                    intentos_data[mov.id].intento2 = parseFloat(int2Input.value);
+                }
+                
+                const int3Input = document.getElementById(`mov-${mov.id}-int3`);
+                if (int3Input && int3Input.value) {
+                    intentos_data[mov.id].intento3 = parseFloat(int3Input.value);
+                }
+            }
+            
+            if (faltanDatos) return;
+
+            await postData('/agregar_completo', { 
+                cat_id: currentCat, 
+                nombre, 
+                carrera, 
+                bw,
+                intentos: intentos_data
+            });
+            
+            document.getElementById('new-nombre').value = '';
+            document.getElementById('new-carrera').value = '';
+            document.getElementById('new-bw').value = '';
+            
+            for (const mov of movimientos) {
+                const int1 = document.getElementById(`mov-${mov.id}-int1`);
+                const int2 = document.getElementById(`mov-${mov.id}-int2`);
+                const int3 = document.getElementById(`mov-${mov.id}-int3`);
+                if (int1) int1.value = '';
+                if (int2) int2.value = '';
+                if (int3) int3.value = '';
+            }
+            
+            alert("✅ Participante agregado!");
+        }
+
+        async function eliminarParticipante(nombre) {
+            if(confirm(`⚠️ ¿Eliminar a ${nombre}?`)) {
+                await postData('/eliminar_participante', { cat_id: currentCat, nombre });
+            }
+        }
+
+        async function editarBW(nombre, actual) {
+            const nuevo = prompt(`Nuevo BW para ${nombre}:`, actual);
+            if(nuevo && parseFloat(nuevo) > 0) {
+                await postData('/editar_bw', { cat_id: currentCat, nombre, bw: nuevo });
+            }
+        }
+
+        async function editarIntento1(nombre, mov_id, pesoActual) {
+            const nuevoPeso = prompt(`Editar Intento 1 para ${nombre} (kg):`, pesoActual);
+            
+            if (!nuevoPeso || nuevoPeso === '' || nuevoPeso === null) {
+                return;
+            }
+            
+            const pesoFloat = parseFloat(nuevoPeso);
+            
+            if (isNaN(pesoFloat) || pesoFloat <= 0) {
+                alert('❌ Peso inválido');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/editar_intento1', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cat_id: currentCat,
+                        mov_id: mov_id,
+                        nombre: nombre,
+                        nuevo_peso: pesoFloat
+                    })
+                });
+                
+                const resultado = await res.json();
+                
+                if (res.ok) {
+                    alert(`✅ Intento 1 actualizado a ${pesoFloat} kg`);
+                    await cargarTodo();
+                } else {
+                    alert(`❌ Error: ${resultado.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al actualizar el intento');
+            }
+        }
+
+        async function registrarIntento(nombre, mov_id, intento, resultado) {
+            await postData('/registrar_intento', { 
+                cat_id: currentCat, 
+                mov_id, 
+                nombre, 
+                intento, 
+                resultado 
+            });
+        }
+
+        async function borrarIntento(nombre, mov_id, intento) {
+            if(confirm("¿Borrar resultado?")) {
+                await postData('/borrar_intento', { 
+                    cat_id: currentCat, 
+                    mov_id, 
+                    nombre, 
+                    intento 
+                });
+            }
+        }
+
+        async function guardarYRegistrar(nombre, mov_id, intento, resultado) {
+            const inputId = `in${intento}-${mov_id}-${nombre}`;
+            const peso = document.getElementById(inputId).value;
+            
+            await postData('/actualizar_peso', { 
+                cat_id: currentCat, 
+                mov_id, 
+                nombre, 
+                intento, 
+                peso 
+            });
+            await registrarIntento(nombre, mov_id, intento, resultado);
+            
+            limpiarValorTemporal(inputId);
+        }
+
+        async function postData(url, data) {
+            try {
+                const res = await fetch(url, {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if(!res.ok) console.error("Error petición");
+                await new Promise(resolve => setTimeout(resolve, 500));
+                cargarTodo();
+            } catch(e) { 
+                console.error(e); 
+            }
+        }
+
+        function descargarRanking() {
+            window.location.href = `/descargar/${currentCat}`;
+        }
+
+        // Inicializar
+        cargarTodo();
+        generarFormularioMovimientos();
+    </script>
+</body>
+</html>
