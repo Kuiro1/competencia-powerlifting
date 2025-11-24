@@ -180,6 +180,16 @@
             max-width: 300px;
             object-fit: contain;
         }
+
+        /* Animaciones para notificaciones en tiempo real */
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -279,10 +289,13 @@
             document.getElementById('connection-indicator').textContent = '🟢 Conectado';
         });
 
+        // MODIFICADO: Mejorar manejo de actualizaciones en tiempo real
         socket.on('datos_actualizados', (data) => {
             console.log('📡 Actualización recibida:', data);
+            
             // Solo recargar si es la categoría actual y no estamos escribiendo
             if (data.categoria === currentCat && !userIsTyping && !isLoading) {
+                mostrarNotificacion('✅ Datos actualizados');
                 cargarTodo();
             }
         });
@@ -292,6 +305,34 @@
             document.getElementById('connection-indicator').className = 'connection-indicator disconnected';
             document.getElementById('connection-indicator').textContent = '🔴 Desconectado';
         });
+
+        // NUEVO: Función para mostrar notificaciones visuales
+        function mostrarNotificacion(mensaje) {
+            const notif = document.createElement('div');
+            notif.textContent = mensaje;
+            notif.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 5px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                font-weight: bold;
+            `;
+            
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
 
         document.addEventListener('focusin', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {

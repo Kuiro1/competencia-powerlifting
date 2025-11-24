@@ -15,7 +15,8 @@ app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui'
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Inicializar SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
+
 
 # Archivo donde se guardarán los datos
 BACKUP_FILE = 'competencia_backup.json'
@@ -640,4 +641,5 @@ def handle_disconnect():
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    socketio.run(app, debug=False, host='0.0.0.0', port=port)
+    socketio.run(app, debug=False, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+
