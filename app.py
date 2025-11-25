@@ -629,7 +629,6 @@ def editar_intento1():
         return jsonify({"error": f"Error interno: {str(e)}"}), 500
 @app.route('/editar_intento2', methods=['POST'])
 def editar_intento2():
-    """Editar el segundo intento de un participante"""
     try:
         data = request.json
         cat_id = data.get('cat_id')
@@ -637,58 +636,35 @@ def editar_intento2():
         nombre = data.get('nombre')
         nuevo_peso = float(data.get('nuevo_peso'))
         
-        print(f"📝 Editando Intento 2: {nombre} en {mov_id} -> {nuevo_peso} kg")
-        
-        if cat_id not in datos_globales:
+        if cat_id not in datos_globales or cat_id not in FILES_CONFIG:
             return jsonify({"error": "Categoría no válida"}), 400
-        
-        if cat_id not in FILES_CONFIG:
-            return jsonify({"error": "Configuración no encontrada"}), 400
         
         lista = datos_globales[cat_id]
         config = FILES_CONFIG[cat_id]
         
         if mov_id not in config['movimientos']:
-            return jsonify({"error": f"Movimiento '{mov_id}' no válido"}), 400
+            return jsonify({"error": "Movimiento no válido"}), 400
         
         mov_config = config['movimientos'][mov_id]
-        
         if 'intento2' not in mov_config:
-            return jsonify({"error": "Este movimiento no tiene intento 2"}), 400
+            return jsonify({"error": "No tiene intento 2"}), 400
         
         col_intento2 = mov_config['intento2']
         
-        participante_encontrado = False
         for participante in lista:
             if participante.get('Nombre') == nombre:
                 participante[f'col_{col_intento2}'] = nuevo_peso
-                participante_encontrado = True
-                break
+                guardar_backup()
+                notificar_cambios(cat_id)
+                return jsonify({"success": True, "mensaje": f"Intento 2 actualizado a {nuevo_peso} kg"})
         
-        if not participante_encontrado:
-            return jsonify({"error": f"Participante '{nombre}' no encontrado"}), 404
-        
-        guardar_backup()
-        notificar_cambios(cat_id)
-        
-        print(f"✅ Intento 2 actualizado exitosamente")
-        
-        return jsonify({
-            "success": True,
-            "mensaje": f"Intento 2 actualizado a {nuevo_peso} kg"
-        })
-    
+        return jsonify({"error": "Participante no encontrado"}), 404
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        print(f"❌ Error en editar_intento2:")
-        print(error_detail)
-        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/editar_intento3', methods=['POST'])
 def editar_intento3():
-    """Editar el tercer intento de un participante"""
     try:
         data = request.json
         cat_id = data.get('cat_id')
@@ -696,64 +672,33 @@ def editar_intento3():
         nombre = data.get('nombre')
         nuevo_peso = float(data.get('nuevo_peso'))
         
-        print(f"📝 Editando Intento 3: {nombre} en {mov_id} -> {nuevo_peso} kg")
-        
-        if cat_id not in datos_globales:
+        if cat_id not in datos_globales or cat_id not in FILES_CONFIG:
             return jsonify({"error": "Categoría no válida"}), 400
-        
-        if cat_id not in FILES_CONFIG:
-            return jsonify({"error": "Configuración no encontrada"}), 400
         
         lista = datos_globales[cat_id]
         config = FILES_CONFIG[cat_id]
         
         if mov_id not in config['movimientos']:
-            return jsonify({"error": f"Movimiento '{mov_id}' no válido"}), 400
+            return jsonify({"error": "Movimiento no válido"}), 400
         
         mov_config = config['movimientos'][mov_id]
-        
         if 'intento3' not in mov_config:
-            return jsonify({"error": "Este movimiento no tiene intento 3"}), 400
+            return jsonify({"error": "No tiene intento 3"}), 400
         
         col_intento3 = mov_config['intento3']
         
-        participante_encontrado = False
         for participante in lista:
             if participante.get('Nombre') == nombre:
                 participante[f'col_{col_intento3}'] = nuevo_peso
-                participante_encontrado = True
-                break
+                guardar_backup()
+                notificar_cambios(cat_id)
+                return jsonify({"success": True, "mensaje": f"Intento 3 actualizado a {nuevo_peso} kg"})
         
-        if not participante_encontrado:
-            return jsonify({"error": f"Participante '{nombre}' no encontrado"}), 404
-        
-        guardar_backup()
-        notificar_cambios(cat_id)
-        
-        print(f"✅ Intento 3 actualizado exitosamente")
-        
-        return jsonify({
-            "success": True,
-            "mensaje": f"Intento 3 actualizado a {nuevo_peso} kg"
-        })
-    
+        return jsonify({"error": "Participante no encontrado"}), 404
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        print(f"❌ Error en editar_intento3:")
-        print(error_detail)
-        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
-# --- EVENTOS WEBSOCKET ---
-
-@socketio.on('connect')
-def handle_connect():
-    print('🔌 Cliente conectado')
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('🔌 Cliente desconectado')
-
+<
 # --- EJECUTAR SERVIDOR ---
 
 if __name__ == "__main__":
