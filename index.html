@@ -282,10 +282,9 @@
 
         // Conectar Socket.IO para tiempo real
         const socket = io({
-    transports: ['websocket'],
-    upgrade: false
-});
-
+            transports: ['websocket'],
+            upgrade: false
+        });
 
         socket.on('connect', () => {
             console.log('✅ Conectado al servidor en tiempo real');
@@ -293,11 +292,9 @@
             document.getElementById('connection-indicator').textContent = '🟢 Conectado';
         });
 
-        // MODIFICADO: Mejorar manejo de actualizaciones en tiempo real
         socket.on('datos_actualizados', (data) => {
             console.log('📡 Actualización recibida:', data);
             
-            // Solo recargar si es la categoría actual y no estamos escribiendo
             if (data.categoria === currentCat && !userIsTyping && !isLoading) {
                 mostrarNotificacion('✅ Datos actualizados');
                 cargarTodo();
@@ -310,7 +307,6 @@
             document.getElementById('connection-indicator').textContent = '🔴 Desconectado';
         });
 
-        // NUEVO: Función para mostrar notificaciones visuales
         function mostrarNotificacion(mensaje) {
             const notif = document.createElement('div');
             notif.textContent = mensaje;
@@ -552,9 +548,10 @@
                     
                     const r1 = d.Res1;
                     
+                    // INTENTO 1 - Editable si no tiene resultado
                     let html_int1 = '';
                     if (!r1 && int1 !== '-') {
-                        html_int1 = `<b>${int1}</b> <button class="btn btn-editar" onclick="editarIntento1('${d.Nombre}', '${movimiento.id}', ${d.Intento1})" title="Editar peso">✎</button>`;
+                        html_int1 = `<b>${int1}</b> <button class="btn btn-editar" onclick="editarIntento(1, '${d.Nombre}', '${movimiento.id}', ${d.Intento1})" title="Editar peso">✎</button>`;
                     } else {
                         html_int1 = `<b>${int1}</b>`;
                     }
@@ -566,6 +563,17 @@
                     
                     const r2 = d.Res2;
                     const dis2 = r2 ? 'disabled' : '';
+                    
+                    // INTENTO 2 - Ahora editable si ya tiene peso pero no resultado
+                    let html_int2 = '';
+                    if (int2 && !r2) {
+                        html_int2 = `<b>${int2}</b> <button class="btn btn-editar" onclick="editarIntento(2, '${d.Nombre}', '${movimiento.id}', ${d.Intento2})" title="Editar peso">✎</button>`;
+                    } else if (int2) {
+                        html_int2 = `<b>${int2}</b>`;
+                    } else {
+                        html_int2 = `<input id="in2-${movimiento.id}-${d.Nombre}" value="${int2}" ${dis2} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)">`;
+                    }
+                    
                     let html_r2 = r2 ?
                         `<b>${r2.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
                         `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','2','exito')" ${dis2}>✅</button>
@@ -578,20 +586,31 @@
                             <td>${bw}</td>
                             <td>${html_int1}</td>
                             <td>${html_r1}</td>
-                            <td><input id="in2-${movimiento.id}-${d.Nombre}" value="${int2}" ${dis2} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)"></td>
+                            <td>${html_int2}</td>
                             <td>${html_r2}</td>
                     `;
                     
                     if (movimiento.intentos === 3) {
                         const r3 = d.Res3;
                         const dis3 = r3 ? 'disabled' : '';
+                        
+                        // INTENTO 3 - Ahora editable si ya tiene peso pero no resultado
+                        let html_int3 = '';
+                        if (int3 && !r3) {
+                            html_int3 = `<b>${int3}</b> <button class="btn btn-editar" onclick="editarIntento(3, '${d.Nombre}', '${movimiento.id}', ${d.Intento3})" title="Editar peso">✎</button>`;
+                        } else if (int3) {
+                            html_int3 = `<b>${int3}</b>`;
+                        } else {
+                            html_int3 = `<input id="in3-${movimiento.id}-${d.Nombre}" value="${int3}" ${dis3} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)">`;
+                        }
+                        
                         let html_r3 = r3 ?
                             `<b>${r3.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
                             `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','exito')" ${dis3}>✅</button>
                              <button class="btn btn-fallo" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','fallo')" ${dis3}>❌</button>`;
                         
                         fila += `
-                            <td><input id="in3-${movimiento.id}-${d.Nombre}" value="${int3}" ${dis3} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)"></td>
+                            <td>${html_int3}</td>
                             <td>${html_r3}</td>
                         `;
                     }
@@ -686,43 +705,42 @@
             }
         }
 
-        async function editarIntento1(nombre, mov_id, pesoActual) {
-            const nuevoPeso = prompt(`Editar Intento 1 para ${nombre} (kg):`, pesoActual);
+        // NUEVA FUNCIÓN UNIFICADA para editar cualquier intento
+        async function editarIntento(numeroIntento, nombre, mov_id, pesoActual) {
+            const nuevoPeso = prompt(`Editar Intento ${numeroIntento} de ${nombre}\nPeso actual: ${pesoActual} kg\n\nIngrese el nuevo peso (kg):`, pesoActual);
             
-            if (!nuevoPeso || nuevoPeso === '' || nuevoPeso === null) {
-                return;
-            }
+            if (nuevoPeso === null || nuevoPeso.trim() === '') return;
             
-            const pesoFloat = parseFloat(nuevoPeso);
-            
-            if (isNaN(pesoFloat) || pesoFloat <= 0) {
+            const peso = parseFloat(nuevoPeso);
+            if (isNaN(peso) || peso < 0) {
                 alert('❌ Peso inválido');
                 return;
             }
             
             try {
-                const res = await fetch('/editar_intento1', {
+                const endpoint = `/editar_intento${numeroIntento}`;
+                const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         cat_id: currentCat,
                         mov_id: mov_id,
                         nombre: nombre,
-                        nuevo_peso: pesoFloat
+                        nuevo_peso: peso
                     })
                 });
                 
-                const resultado = await res.json();
+                const data = await response.json();
                 
-                if (res.ok) {
-                    alert(`✅ Intento 1 actualizado a ${pesoFloat} kg`);
-                    await cargarTodo();
+                if (response.ok) {
+                    alert(`✅ Intento ${numeroIntento} actualizado a ${peso} kg`);
+                    cargarTodo();
                 } else {
-                    alert(`❌ Error: ${resultado.error}`);
+                    alert(`❌ ${data.error || 'Error al actualizar'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error al actualizar el intento');
+                alert('❌ Error de conexión');
             }
         }
 
