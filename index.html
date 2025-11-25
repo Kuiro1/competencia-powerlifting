@@ -541,19 +541,20 @@
             } else {
                 datos.forEach((d, i) => {
                     const bw = d.BW ? d.BW.toFixed(1) : '0';
-                    const int1 = d.Intento1 > 0 ? d.Intento1 : '-';
-                    const int2 = d.Intento2 > 0 ? d.Intento2 : '';
-                    const int3 = d.Intento3 > 0 ? d.Intento3 : '';
+                    const int1 = d.Intento1 > 0 ? d.Intento1 : 0;
+                    const int2 = d.Intento2 > 0 ? d.Intento2 : 0;
+                    const int3 = d.Intento3 > 0 ? d.Intento3 : 0;
                     const mejor = d.Mejor > 0 ? `<b>${d.Mejor}</b>` : '-';
                     
                     const r1 = d.Res1;
+                    const r2 = d.Res2;
                     
-                    // INTENTO 1 - Editable si no tiene resultado
+                    // INTENTO 1 - Siempre con peso + botón editar (si no tiene resultado)
                     let html_int1 = '';
-                    if (!r1 && int1 !== '-') {
-                        html_int1 = `<b>${int1}</b> <button class="btn btn-editar" onclick="editarIntento(1, '${d.Nombre}', '${movimiento.id}', ${d.Intento1})" title="Editar peso">✎</button>`;
-                    } else {
+                    if (r1) {
                         html_int1 = `<b>${int1}</b>`;
+                    } else {
+                        html_int1 = `<b>${int1}</b> <button class="btn btn-editar" onclick="editarIntento(1, '${d.Nombre}', '${movimiento.id}', ${int1})" title="Editar peso">✎</button>`;
                     }
                     
                     let html_r1 = r1 ? 
@@ -561,23 +562,18 @@
                         `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','exito')">✅</button>
                          <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','fallo')">❌</button>`;
                     
-                    const r2 = d.Res2;
-                    const dis2 = r2 ? 'disabled' : '';
-                    
-                    // INTENTO 2 - Ahora editable si ya tiene peso pero no resultado
+                    // INTENTO 2 - Siempre con peso + botón editar (si no tiene resultado)
                     let html_int2 = '';
-                    if (int2 && !r2) {
-                        html_int2 = `<b>${int2}</b> <button class="btn btn-editar" onclick="editarIntento(2, '${d.Nombre}', '${movimiento.id}', ${d.Intento2})" title="Editar peso">✎</button>`;
-                    } else if (int2) {
+                    if (r2) {
                         html_int2 = `<b>${int2}</b>`;
                     } else {
-                        html_int2 = `<input id="in2-${movimiento.id}-${d.Nombre}" value="${int2}" ${dis2} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)">`;
+                        html_int2 = `<b>${int2}</b> <button class="btn btn-editar" onclick="editarIntento(2, '${d.Nombre}', '${movimiento.id}', ${int2})" title="Editar peso">✎</button>`;
                     }
                     
                     let html_r2 = r2 ?
                         `<b>${r2.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
-                        `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','2','exito')" ${dis2}>✅</button>
-                         <button class="btn btn-fallo" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','2','fallo')" ${dis2}>❌</button>`;
+                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','exito')">✅</button>
+                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','fallo')">❌</button>`;
                     
                     let fila = `
                         <tr>
@@ -592,22 +588,19 @@
                     
                     if (movimiento.intentos === 3) {
                         const r3 = d.Res3;
-                        const dis3 = r3 ? 'disabled' : '';
                         
-                        // INTENTO 3 - Ahora editable si ya tiene peso pero no resultado
+                        // INTENTO 3 - Siempre con peso + botón editar (si no tiene resultado)
                         let html_int3 = '';
-                        if (int3 && !r3) {
-                            html_int3 = `<b>${int3}</b> <button class="btn btn-editar" onclick="editarIntento(3, '${d.Nombre}', '${movimiento.id}', ${d.Intento3})" title="Editar peso">✎</button>`;
-                        } else if (int3) {
+                        if (r3) {
                             html_int3 = `<b>${int3}</b>`;
                         } else {
-                            html_int3 = `<input id="in3-${movimiento.id}-${d.Nombre}" value="${int3}" ${dis3} onchange="guardarValorTemporal(this)" oninput="guardarValorTemporal(this)">`;
+                            html_int3 = `<b>${int3}</b> <button class="btn btn-editar" onclick="editarIntento(3, '${d.Nombre}', '${movimiento.id}', ${int3})" title="Editar peso">✎</button>`;
                         }
                         
                         let html_r3 = r3 ?
                             `<b>${r3.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
-                            `<button class="btn btn-exito" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','exito')" ${dis3}>✅</button>
-                             <button class="btn btn-fallo" onclick="guardarYRegistrar('${d.Nombre}','${movimiento.id}','3','fallo')" ${dis3}>❌</button>`;
+                            `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','exito')">✅</button>
+                             <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','fallo')">❌</button>`;
                         
                         fila += `
                             <td>${html_int3}</td>
@@ -705,7 +698,7 @@
             }
         }
 
-        // NUEVA FUNCIÓN UNIFICADA para editar cualquier intento
+        // FUNCIÓN UNIFICADA para editar cualquier intento
         async function editarIntento(numeroIntento, nombre, mov_id, pesoActual) {
             const nuevoPeso = prompt(`Editar Intento ${numeroIntento} de ${nombre}\nPeso actual: ${pesoActual} kg\n\nIngrese el nuevo peso (kg):`, pesoActual);
             
@@ -763,22 +756,6 @@
                     intento 
                 });
             }
-        }
-
-        async function guardarYRegistrar(nombre, mov_id, intento, resultado) {
-            const inputId = `in${intento}-${mov_id}-${nombre}`;
-            const peso = document.getElementById(inputId).value;
-            
-            await postData('/actualizar_peso', { 
-                cat_id: currentCat, 
-                mov_id, 
-                nombre, 
-                intento, 
-                peso 
-            });
-            await registrarIntento(nombre, mov_id, intento, resultado);
-            
-            limpiarValorTemporal(inputId);
         }
 
         async function postData(url, data) {
