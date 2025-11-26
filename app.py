@@ -698,7 +698,7 @@ def editar_intento3():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-<
+
 # --- EJECUTAR SERVIDOR ---
 
 if __name__ == "__main__":
