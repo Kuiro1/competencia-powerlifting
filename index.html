@@ -143,6 +143,7 @@
             display: none;
         }
 
+
         .connection-indicator {
             position: fixed;
             top: 50px;
@@ -154,15 +155,18 @@
             font-size: 12px;
         }
 
+
         .connected {
             background: #28a745;
             color: white;
         }
 
+
         .disconnected {
             background: #dc3545;
             color: white;
         }
+
 
         /* Estilos para el header del ranking con logo */
         .header-ranking {
@@ -181,6 +185,7 @@
             object-fit: contain;
         }
 
+
         /* Animaciones para notificaciones en tiempo real */
         @keyframes slideIn {
             from { transform: translateX(400px); opacity: 0; }
@@ -194,13 +199,16 @@
 </head>
 <body>
 
+
     <div id="paused-indicator" class="paused-indicator">
         ⏸️ Auto-actualización pausada
     </div>
 
+
     <div id="connection-indicator" class="connection-indicator disconnected">
         🔴 Desconectado
     </div>
+
 
     <div class="header-control">
         <h1>⛹️ Gestión de Competencia</h1>
@@ -222,7 +230,9 @@
         </div>
     </div>
 
+
     <div class="debug" id="debug-info"></div>
+
 
     <div class="form-container">
         <div class="form-group">
@@ -246,6 +256,7 @@
         <button class="btn btn-exito" onclick="agregarParticipante()" style="padding: 10px 20px;">➕ Agregar</button>
     </div>
 
+
     <div class="section-container">
         <div class="header-ranking">
             <h2>🏆 Ranking General (Suma de Todos los Movimientos)</h2>
@@ -268,10 +279,12 @@
         </div>
     </div>
 
+
     <div class="section-container">
         <h2>📊 Movimientos - Panel de Control</h2>
         <div id="tablas-movimientos"></div>
     </div>
+
 
     <script>
         let currentCat = document.getElementById('cat-selector').value;
@@ -280,17 +293,20 @@
         let isLoading = false;
         let valoresTemporales = {};
 
+
         // Conectar Socket.IO para tiempo real
         const socket = io({
             transports: ['websocket'],
             upgrade: false
         });
 
+
         socket.on('connect', () => {
             console.log('✅ Conectado al servidor en tiempo real');
             document.getElementById('connection-indicator').className = 'connection-indicator connected';
             document.getElementById('connection-indicator').textContent = '🟢 Conectado';
         });
+
 
         socket.on('datos_actualizados', (data) => {
             console.log('📡 Actualización recibida:', data);
@@ -301,11 +317,13 @@
             }
         });
 
+
         socket.on('disconnect', () => {
             console.log('❌ Desconectado del servidor');
             document.getElementById('connection-indicator').className = 'connection-indicator disconnected';
             document.getElementById('connection-indicator').textContent = '🔴 Desconectado';
         });
+
 
         function mostrarNotificacion(mensaje) {
             const notif = document.createElement('div');
@@ -334,12 +352,14 @@
             }, 3000);
         }
 
+
         document.addEventListener('focusin', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 userIsTyping = true;
                 document.getElementById('paused-indicator').style.display = 'block';
             }
         });
+
 
         document.addEventListener('focusout', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
@@ -350,6 +370,7 @@
                 }, 5000);
             }
         });
+
 
         document.addEventListener('input', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
@@ -364,12 +385,14 @@
             }
         });
 
+
         function cambiarCategoria() {
             currentCat = document.getElementById('cat-selector').value;
             valoresTemporales = {};
             generarFormularioMovimientos();
             cargarTodo();
         }
+
 
         function generarFormularioMovimientos() {
             const contenedor = document.getElementById('form-movimientos');
@@ -418,11 +441,13 @@
                 });
         }
 
+
         function guardarValorTemporal(input) {
             if (input.value) {
                 valoresTemporales[input.id] = input.value;
             }
         }
+
 
         function restaurarValoresTemporales() {
             for (let id in valoresTemporales) {
@@ -433,15 +458,19 @@
             }
         }
 
+
         function limpiarValorTemporal(inputId) {
             delete valoresTemporales[inputId];
         }
+
 
         async function cargarTodo() {
             if (isLoading) return;
             if (userIsTyping) return;
 
+
             isLoading = true;
+
 
             try {
                 const scrollPos = window.scrollY;
@@ -481,6 +510,7 @@
             }
         }
 
+
         function dibujarRanking(datos) {
             const tbody = document.getElementById('tbody-ranking');
             tbody.innerHTML = '';
@@ -511,6 +541,7 @@
                 tbody.innerHTML += fila;
             });
         }
+
 
         function crearTablaMovimiento(movimiento, datos) {
             let html = `
@@ -558,7 +589,7 @@
                     }
                     
                     let html_r1 = r1 ? 
-                        `<b>${r1.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','1')">🗑️</button>` :
+                        `<b>${r1 === 'exito' ? 'VALIDO' : 'NULO'}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','1')">🗑️</button>` :
                         `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','exito')">✅</button>
                          <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','fallo')">❌</button>`;
                     
@@ -571,7 +602,7 @@
                     }
                     
                     let html_r2 = r2 ?
-                        `<b>${r2.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
+                        `<b>${r2 === 'exito' ? 'VALIDO' : 'NULO'}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
                         `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','exito')">✅</button>
                          <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','fallo')">❌</button>`;
                     
@@ -598,7 +629,7 @@
                         }
                         
                         let html_r3 = r3 ?
-                            `<b>${r3.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
+                            `<b>${r3 === 'exito' ? 'VALIDO' : 'NULO'}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
                             `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','exito')">✅</button>
                              <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','fallo')">❌</button>`;
                         
@@ -617,15 +648,18 @@
             return html;
         }
 
+
         async function agregarParticipante() {
             const nombre = document.getElementById('new-nombre').value;
             const carrera = document.getElementById('new-carrera').value;
             const bw = document.getElementById('new-bw').value;
 
+
             if(!nombre || !bw) {
                 alert("❌ Faltan datos obligatorios (Nombre y BW)");
                 return;
             }
+
 
             const res_mov = await fetch(`/movimientos/${currentCat}`);
             const movimientos = await res_mov.json();
@@ -661,6 +695,7 @@
             
             if (faltanDatos) return;
 
+
             await postData('/agregar_completo', { 
                 cat_id: currentCat, 
                 nombre, 
@@ -685,11 +720,13 @@
             alert("✅ Participante agregado!");
         }
 
+
         async function eliminarParticipante(nombre) {
             if(confirm(`⚠️ ¿Eliminar a ${nombre}?`)) {
                 await postData('/eliminar_participante', { cat_id: currentCat, nombre });
             }
         }
+
 
         async function editarBW(nombre, actual) {
             const nuevo = prompt(`Nuevo BW para ${nombre}:`, actual);
@@ -697,6 +734,7 @@
                 await postData('/editar_bw', { cat_id: currentCat, nombre, bw: nuevo });
             }
         }
+
 
         // FUNCIÓN UNIFICADA para editar cualquier intento
         async function editarIntento(numeroIntento, nombre, mov_id, pesoActual) {
@@ -737,6 +775,7 @@
             }
         }
 
+
         async function registrarIntento(nombre, mov_id, intento, resultado) {
             await postData('/registrar_intento', { 
                 cat_id: currentCat, 
@@ -746,6 +785,7 @@
                 resultado 
             });
         }
+
 
         async function borrarIntento(nombre, mov_id, intento) {
             if(confirm("¿Borrar resultado?")) {
@@ -757,6 +797,7 @@
                 });
             }
         }
+
 
         async function postData(url, data) {
             try {
@@ -773,9 +814,11 @@
             }
         }
 
+
         function descargarRanking() {
             window.location.href = `/descargar/${currentCat}`;
         }
+
 
         // Inicializar
         cargarTodo();
