@@ -559,8 +559,8 @@
                     
                     let html_r1 = r1 ? 
                         `<b>${r1.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','1')">🗑️</button>` :
-                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','valido')">✅</button>
-                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','nulo')">❌</button>`;
+                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','exito')">✅</button>
+                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','1','fallo')">❌</button>`;
                     
                     // INTENTO 2 - Siempre con peso + botón editar (si no tiene resultado)
                     let html_int2 = '';
@@ -572,8 +572,8 @@
                     
                     let html_r2 = r2 ?
                         `<b>${r2.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','2')">🗑️</button>` :
-                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','valido')">✅</button>
-                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','nulo')">❌</button>`;
+                        `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','exito')">✅</button>
+                         <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','2','fallo')">❌</button>`;
                     
                     let fila = `
                         <tr>
@@ -599,8 +599,8 @@
                         
                         let html_r3 = r3 ?
                             `<b>${r3.toUpperCase()}</b> <button class="btn btn-borrar" onclick="borrarIntento('${d.Nombre}','${movimiento.id}','3')">🗑️</button>` :
-                            `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','valido')">✅</button>
-                             <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','nulo')">❌</button>`;
+                            `<button class="btn btn-exito" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','exito')">✅</button>
+                             <button class="btn btn-fallo" onclick="registrarIntento('${d.Nombre}','${movimiento.id}','3','fallo')">❌</button>`;
                         
                         fila += `
                             <td>${html_int3}</td>
